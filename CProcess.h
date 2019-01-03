@@ -10,6 +10,10 @@ public:
 	virtual int Run()=0;
 	virtual int Kill()=0;
 	virtual bool IsRunning()=0;
+	std::string name;
+	std::string command;
+	virtual std::string GetRunningState()=0;
+
 	friend std::ostream & operator<<(std::ostream & stream, CProcess & process);
 };
 

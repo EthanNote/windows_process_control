@@ -7,6 +7,7 @@
 #include<vector>
 #include<map>
 #include<Windows.h>
+#include<json/json.h>
 using namespace std;
 
 CScript::CScript()
@@ -24,6 +25,10 @@ extern "C" {
 #include <lualib.h>
 }
 extern void doREPL(lua_State *L);
+
+extern "C" {
+	int luaopen_cjson(lua_State *l);
+}
 
 //static std::thread* idle_thread = NULL;
 lua_State *L = NULL;
@@ -59,7 +64,7 @@ static int ls(lua_State *L) {
 		for (auto iter = processes.begin(); iter != processes.end(); iter++) {
 			auto name(iter->first);
 			auto cmd(iter->second);
-			name.resize(name_width-1, ' ');
+			name.resize(name_width - 1, ' ');
 			name += " ";
 			stringstream  s;
 			s << *cmd;
@@ -128,6 +133,32 @@ static int kill(lua_State *L) {
 
 }
 
+static int getstate(lua_State *L) {
+	Json::Value result;
+	for (auto i = processes.begin(); i != processes.end(); i++) {
+		if (!i->second) {
+			continue;
+		}
+		Json::Value item;
+		item["name"] = i->second->name;
+		item["command"] = i->second->command;
+		item["state"] = i->second->GetRunningState();
+		/*if (i->second->IsRunning()) {
+			item["state"] = "running";
+		}
+		else {
+			item["state"] = "stoped";
+		}*/
+		result.append(item);
+	}
+	Json::StreamWriterBuilder wbuilder;
+	std::string jsonstring = Json::writeString(wbuilder, result);
+	std::cout << jsonstring << std::endl;
+	lua_pushstring(L, jsonstring.c_str());
+	return 1;
+}
+
+
 void script::init()
 {
 	L = luaL_newstate();  /* create state */
@@ -136,13 +167,20 @@ void script::init()
 	}
 	luaL_checkversion(L);  /* check that interpreter has correct version */
 	luaL_openlibs(L);  /* open standard libraries */
+	luaopen_cjson(L);
 	//print_version();
 
-	static const struct luaL_Reg funcs[] = {
+	static const struct luaL_Reg ps_funcs[] = {
 	{"add", add},
 	{"ls", ls},
 	{"run", run},
 	{"kill", kill},
+	{NULL, NULL},
+	};
+
+	static const struct luaL_Reg client_funcs[] = {
+	
+	{"getstate", getstate},
 	{NULL, NULL},
 	};
 
@@ -151,14 +189,39 @@ void script::init()
 		lua_pop(L, 1);
 		lua_newtable(L);
 	}
-	luaL_setfuncs(L, funcs, 0);
+	luaL_setfuncs(L, ps_funcs, 0);
 	lua_setglobal(L, "ps");
+
+	lua_getglobal(L, "client");
+	if (lua_isnil(L, -1)) {
+		lua_pop(L, 1);
+		lua_newtable(L);
+	}
+	luaL_setfuncs(L, client_funcs, 0);
+	lua_setglobal(L, "client");
 
 	const char* info = "Process console";
 	//lua_writestring(LUA_COPYRIGHT, strlen(LUA_COPYRIGHT));
 	lua_writestring(info, strlen(info));
 	lua_writeline();
-	luaL_dofile(L, "init.lua");
+	luaL_dofile(L, "./init.lua");
+}
+
+std::string script::on_data(std::string & data)
+{
+	lua_getglobal(L, "on_data");
+	lua_pushstring(L, data.c_str());
+	/*char buffer[4096];
+	size_t size = 0;*/
+	if (!lua_pcall(L, 1, 1, 0)) {
+		auto p = lua_tostring(L, -1);
+		return std::string(p);
+	}
+	else {
+		auto p = lua_tostring(L, -1);
+		std::cout << p << std::endl;
+		return std::string("invalid data, error dumped");
+	}
 }
 
 //void script::run_script()

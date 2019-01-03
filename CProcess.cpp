@@ -14,6 +14,7 @@ public:
 	virtual int Run() override;
 	virtual int Kill() override;
 	virtual bool IsRunning() override;
+	virtual std::string GetRunningState() override;
 };
 
 
@@ -59,6 +60,17 @@ bool SimpleProcess::IsRunning()
 	return false;
 }
 
+std::string SimpleProcess::GetRunningState()
+{
+	if (stProcessInfo.hProcess) {
+
+		int pid = GetProcessId(stProcessInfo.hProcess);
+		std::string result = std::string("running [pid = ") + std::to_string(pid)+std::string("]");
+		return result;
+	}
+	return std::string("stopped");
+}
+
 
 
 
@@ -68,11 +80,14 @@ std::map<std::string, Process> processes;
 
 Process process::factory::Create(std::string name, std::string cmd)
 {
+
 	if (processes[name] != nullptr) {
 		return nullptr;
 	}
 
 	auto ptr = new SimpleProcess();
+	ptr->name = name;
+	ptr->command = cmd;
 	ptr->cmd = cmd;
 	auto result = Process(ptr);
 	processes[name] = result;

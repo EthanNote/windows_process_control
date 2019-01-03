@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="jsoncpp">
+      <UniqueIdentifier>{430c2826-940c-4d1c-a6e3-bd18b2e0ae17}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="lua_cjson">
+      <UniqueIdentifier>{390d694d-898b-452e-a126-c1bb5280a96e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CProcess.h">
@@ -40,6 +46,24 @@
     </ClCompile>
     <ClCompile Include="CUDP.cpp">
       <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="jsoncpp\src\lib_json\json_reader.cpp">
+      <Filter>jsoncpp</Filter>
+    </ClCompile>
+    <ClCompile Include="jsoncpp\src\lib_json\json_value.cpp">
+      <Filter>jsoncpp</Filter>
+    </ClCompile>
+    <ClCompile Include="jsoncpp\src\lib_json\json_writer.cpp">
+      <Filter>jsoncpp</Filter>
+    </ClCompile>
+    <ClCompile Include="lua-cjson\lua_cjson.c">
+      <Filter>lua_cjson</Filter>
+    </ClCompile>
+    <ClCompile Include="lua-cjson\strbuf.c">
+      <Filter>lua_cjson</Filter>
+    </ClCompile>
+    <ClCompile Include="lua-cjson\fpconv.c">
+      <Filter>lua_cjson</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

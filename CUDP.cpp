@@ -1,10 +1,12 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include<json/json.h>
+#include<json/value.h>
 #include "CUDP.h"
 
 #include<WinSock2.h>
 #include<thread>
 #include<iostream>
+#include<sstream>
 
 #pragma comment(lib,"WS2_32.lib")
 //#pragma comment(lib,"jsoncpp.lib")
@@ -24,48 +26,21 @@ class CWinUDP : public CUDP {
 };
 
 
-void print_json(Json::Value data)
+void print_json(Json::Value & data)
 {
-	Json::Value::Members mem = data.getMemberNames();
-	for (auto iter = mem.begin(); iter != mem.end(); iter++)
-	{
-		std::cout << *iter << "\t: ";
-		if (data[*iter].type() == Json::objectValue)
-		{
-			std::cout << std::endl;
-			print_json(data[*iter]);
-		}
-		else if (data[*iter].type() == Json::arrayValue)
-		{
-			std::cout << std::endl;
-			auto cnt = data[*iter].size();
-			for (auto i = 0; i < cnt; i++)
-			{
-				print_json(data[*iter][i]);
-			}
-		}
-		else if (data[*iter].type() == Json::stringValue)
-		{
-			std::cout << data[*iter].asString() << std::endl;
-		}
-		else if (data[*iter].type() == Json::realValue)
-		{
-			std::cout << data[*iter].asDouble() << std::endl;
-		}
-		else if (data[*iter].type() == Json::uintValue)
-		{
-			std::cout << data[*iter].asUInt() << std::endl;
-		}
-		else
-		{
-			std::cout << data[*iter].asInt() << std::endl;
-		}
+	try {
+		data.getMemberNames();
+		Json::StreamWriterBuilder wbuilder;
+		std::string outputConfig = Json::writeString(wbuilder, data);
+		std::cout << outputConfig << std::endl;
 	}
-	return;
+	catch (Json::LogicError e) {
+		std::cout << e.what() << std::endl;
+	}
 }
 
 
-
+#include "CScript.h"
 int CWinUDP::Open(int port)
 {
 	if (!isStartup) {
@@ -85,29 +60,50 @@ int CWinUDP::Open(int port)
 		int BufLen = 1024;
 		sockaddr_in SenderAddr;
 		int SenderAddrSize = sizeof(SenderAddr);
-		Json::Reader reader;
-		Json::Value root;
+		//Json::CharReader reader;
 		while (true) {
 			memset(RecvBuf, 0, BufLen);
 			recvfrom(obj->RecvSocket, RecvBuf, BufLen, 0, (SOCKADDR *)&SenderAddr, &SenderAddrSize);
 			auto data = std::string(RecvBuf);
 			Address addr;
+			addr.addr = SenderAddr;
 			memcpy(addr.ip_bytes, &SenderAddr.sin_addr.S_un, 4);
 			addr.port = SenderAddr.sin_port;
-	
+			std::cout << "[" << addr.ip() << ":" << addr.port << "]" << RecvBuf << std::endl;
+
 			if (obj->data_callback) {
 				obj->data_callback(data, addr);
 			}
 			//obj->OnData(data, addr);
-			std::cout <<"[" <<addr.ip()<<":"<<addr.port << "]" << RecvBuf << std::endl;
 
-			if (reader.parse(data, root))  // reader将Json字符串解析到root，root将包含Json里所有子元素  
-			{
-				//std::string upload_id = root["uploadid"].asString();  // 访问节点，upload_id = "UP000000"  
-				//int code = root["code"].asInt();    // 访问节点，code = 100 
-				std::cout << "[ type = JSON ]" << std::endl;
-				print_json(root);
-			}
+			/*std::string data = std::string(RecvBuf);
+
+			auto result = script::on_data(data);
+			std::cout << result << std::endl;*/
+
+			//try {
+			//	std::istringstream istr;
+			//	istr.str(data);
+			//	Json::Value root;
+			//	istr >> root;
+
+			//	//print_json(root);
+			//	Json::StreamWriterBuilder wbuilder;
+			//	std::string outputConfig = Json::writeString(wbuilder, root);
+			//	std::cout << outputConfig << std::endl;
+			//}
+			//catch(Json::Exception e){
+			//	std::cout << e.what() << std::endl;
+			//}
+			//auto names = root.getMemberNames();
+			//print_json(root);
+
+			//if (reader.parse(data, root))  // reader将Json字符串解析到root，root将包含Json里所有子元素  
+			//{
+			//	//std::string upload_id = root["uploadid"].asString();  // 访问节点，upload_id = "UP000000"  
+			//	//int code = root["code"].asInt();    // 访问节点，code = 100 
+			//	std::cout << "[ type = JSON ]" << std::endl;
+			//}
 		}
 	}, this);
 
@@ -125,12 +121,13 @@ int CWinUDP::Close()
 
 int CWinUDP::Write(std::string str, Address & addr)
 {
-	return 0;
+	return sendto(this->RecvSocket, str.c_str(), str.length(), 0, (sockaddr*)&addr.addr, sizeof(sockaddr));
 }
 
-bool CUDP::OnData(std::function<void(std::string &, Address &)>)
+bool CUDP::OnData(std::function<void(std::string &, Address &)> func)
 {
-	return false;
+	this->data_callback = func;
+	return true;
 }
 
 //void CUDP::OnData(std::string)

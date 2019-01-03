@@ -2,9 +2,11 @@
 #include<string>
 #include<memory>
 #include<functional>
+#include<WinSock2.h>
 
 class Address {
 public:
+	sockaddr_in addr;
 	std::string ip();
 	unsigned char ip_bytes[4];
 	int port;

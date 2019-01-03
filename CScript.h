@@ -1,4 +1,5 @@
 #pragma once
+#include<string>
 class CScript
 {
 public:
@@ -8,5 +9,6 @@ public:
 
 namespace script {
 	void init();
+	std::string on_data(std::string& data);
 	void run_repl();
 }
