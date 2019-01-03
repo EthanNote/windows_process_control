@@ -1,8 +1,6 @@
 ps.add('hub', 'python C:/Users/snipe_000/Documents/dev/radar_standalone_app/service/service_hub.py')
 ps.add('worker', 'python C:/Users/snipe_000/Documents/dev/radar_standalone_app/service/worker.py')
 
-print('add tasks')
-
 function do_ps(msg)
     action = msg.action
     if action then
@@ -30,7 +28,6 @@ end
 
 function on_data(msg)
     json = cjson.decode(msg)
-    print(json.client)
     if json.client then
         return client.getstate()
     else

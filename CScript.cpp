@@ -153,7 +153,7 @@ static int getstate(lua_State *L) {
 	}
 	Json::StreamWriterBuilder wbuilder;
 	std::string jsonstring = Json::writeString(wbuilder, result);
-	std::cout << jsonstring << std::endl;
+	//std::cout << jsonstring << std::endl;
 	lua_pushstring(L, jsonstring.c_str());
 	return 1;
 }
@@ -215,11 +215,13 @@ std::string script::on_data(std::string & data)
 	size_t size = 0;*/
 	if (!lua_pcall(L, 1, 1, 0)) {
 		auto p = lua_tostring(L, -1);
+		lua_pop(L, 1);
 		return std::string(p);
 	}
 	else {
 		auto p = lua_tostring(L, -1);
 		std::cout << p << std::endl;
+		lua_pop(L, 1);
 		return std::string("invalid data, error dumped");
 	}
 }

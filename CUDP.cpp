@@ -69,7 +69,7 @@ int CWinUDP::Open(int port)
 			addr.addr = SenderAddr;
 			memcpy(addr.ip_bytes, &SenderAddr.sin_addr.S_un, 4);
 			addr.port = SenderAddr.sin_port;
-			std::cout << "[" << addr.ip() << ":" << addr.port << "]" << RecvBuf << std::endl;
+			//std::cout << "[" << addr.ip() << ":" << addr.port << "]" << RecvBuf << std::endl;
 
 			if (obj->data_callback) {
 				obj->data_callback(data, addr);
